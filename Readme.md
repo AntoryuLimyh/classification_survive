@@ -329,5 +329,121 @@ RFC was choosen for it ability to deal with huge amount of data which we can be 
 It is no doubt that the bagging and feature randomness attribute as mentioned as the pro of it. will assist to remove any basis but only rely gini impurity process to determine what are the real factors that matters.
 
    
+## Update
+
+1)	Stratified sampling
+
+The data after dropping the missing values as mentioned in the eda.ipynb is 14501 row. This is split between 9686 rows of non-survival (0) and 4815 rows of survival (1), which came to approximately 67% and 33% respectively.
+
+This is the typical case of not having balanced number of examples for each class label. Hence, it is desirable to split the dataset into train and test sets in order to preserves the same proportions of examples in each class as observed in the original dataset.
+
+With the abovementioned, the changes was reflected by adding ``stratify=y`` to the Splitting the Feature and Label data from Training and Testing annotation found in the **Classification Machine Learning with Grid Search.ipynb** 
+
+``X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=101,stratify=y)``
+
+2) Drop the first column
+
+The **DataStandard function** found in the **Support.py** was built on the knowledge from the explatory data analysis (eda.ipynb).
+
+Within it has a line on  to deal with the Ordinal Data that was needed for the classification purposes.
+
+``X = df[['Smoke','Gender','Diabetes','Ejection Fraction']]``
+``X = pd.get_dummies(X,)``
+
+This original code might create potential issue for the classification modelling - **_Multicollinearity_**
+
+It tend to occur when features (input) are highly correlated with one or more of the other features in the dataset. It affects the performance of regression and classification models.
+
+With this in mind, the ``drop_first=True`` was introduce to the revised line in the **DataStandard function**
+
+``X = df[['Smoke','Gender','Diabetes','Ejection Fraction']]``
+``X = pd.get_dummies(X,drop_first=True)``
+
+Along with this revision, there were also related changes made to the **NewDataTransform function** in the same support,py.
+
+``if  data['Smoke'].iloc[i] == "Yes":``
+``clean['Smoke_Yes'] = clean['Smoke_Yes'] +1``
+``else:``
+``clean['Smoke_Yes'] = 0``
+``if  data['Gender'].iloc[i] == "Male":``
+``clean['Gender_Male'] = clean['Gender_Male'] +1``
+``else:``
+``clean['Gender_Male'] = 0``
+``if  data['Diabetes'].iloc[i] == "Normal":``
+``clean['Diabetes_Normal'] = clean['Diabetes_Normal']+1``
+``elif  data['Diabetes'].iloc[i] == "Pre-diabetes":``
+``clean['Diabetes_Pre-diabetes'] = clean['Diabetes_Pre-diabetes']+1``
+``else:``
+``clean['Diabetes_Pre-diabetes'] = 0``
+``if  data['Ejection Fraction'].iloc[i] == "Normal":``
+``clean['Ejection Fraction_Normal'] = clean['Ejection Fraction_Normal']+1``
+``elif  data['Ejection Fraction'].iloc[i] == "Low":``
+``clean['Ejection Fraction_Low'] = clean['Ejection Fraction_Low']+1``
+``else:``
+``clean['Ejection Fraction_Low'] = 0``
+
+3)  Enhance the scoring strategy
+
+As mentioned above, recall score is the one important parameters when it comes to survival issue. You will rather have a wrong labelling on survivor as non-survivor than missing up the potential of non-survivor case.
+
+With new introduction to further enhance or define the scoring parameter for the original Gridsearch process found in the **MLGridSearch function** under the support,py - maker_scorer from Sklearn.
+
+The `make_scorer` function takes two arguments: the function you want to transform, and a statement about whether you want to maximize the score (like accuracy,recall,precision) or minimize it (like MSE or MAE). In the standard implementation, it is assumed that the a higher score is better. 
+
+In our case here where recall is concern, the default setting of  **greater_is_better** bool, default=True fit is a good fit for our requirement.
+
+The changes was reflected in the following lines:
+
+``from  sklearn.metrics  import  make_scorer``
+
+``recallscore = make_scorer(recall_score)``
+
+``Grid = GridSearchCV(ML,DefinedParam_grid,cv=5,scoring=recallscore)``
+
+4) Kfold and Cross Validation
+
+By usual split on the training and test set in our case (70-30 split), It could potential leave us with a small test set. Whether the split is a good indicative will remain unknown to us and, such testing has a potential inherent risk of getting any performance on said set only due to chance. 
+
+To overcome this, the adoption of the cross-validation will be crucial check for our this case. By building K different models, we are able to make predictions on  **all** of our data.
+
+We are now can train our model on all our data because if our 4 models had similar performance using different train sets, we assume that by training it on all the data will get similar performance
+
+Withthe abovementioned, the following was added in the **Classification Machine Learning with Grid Search.ipynb** to get the recall score of the model with its maximum hyperparameters setting obtained from the GridSearch process.
 
 
+Cross Validation Evaluation on the ML model
+
+Define the scoring strategy for cross validation
+``recallscore = make_scorer(recall_score)``
+
+Standard Scaling the X data (In line with GridSearch scaled training set)
+``scaled_X= scaler.fit_transform(X)``
+
+Define the cross validation function with its selected output measurement 
+
+    def cross_val(ML):
+
+		# prepare the cross-validation procedure
+		cv = KFold(n_splits=5, random_state=1, shuffle=True)
+
+
+		# evaluate model
+		scores = cross_val_score(ML, scaled_X, y, scoring=recallscore, cv=cv, n_jobs=-1)
+		
+		# report performance
+		print('ML model :',ML.best_estimator_)
+		print('\nScore',scores )
+		print('\nRecall (average & Standard deviation): %.3f (%.3f)' % (scores.mean(), scores.std()))
+
+
+The results on the recall metrics were as followed :
+
+|Model |Average |Standard Deviation| 
+|---|---|---|---|---|---|---|---|
+|  LR_ML | 0.670    | 0.014| 
+|  KNN_ML  | 0.997|  0.001|  
+| SVC_ML    |  0.888|  0.010| 
+| RT_ML    |  1.000000 | 0.000|  
+  
+
+This still in line that the Random Forest Classifier are still the best model to predict the survivor rate on the given data features with almost perfect recall average and the negligence standard deviation with the cross validation measurement.

@@ -91,7 +91,7 @@ scaled_X_test = scaler.transform(X_test)
 LR_ML = LogisticRegression(solver='saga',multi_class="ovr",max_iter=5000,penalty='none')
 KNN_ML = KNeighborsClassifier(n_neighbors = 1)
 SVC_ML = SVC(C=1, gamma='scale',decision_function_shape='ovo')
-RT_ML = RandomForestClassifier(n_estimators =24)
+RT_ML = RandomForestClassifier(n_estimators =83)
 
 
 # - Created list on the selected ML Models

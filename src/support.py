@@ -6,6 +6,7 @@ import joblib
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import confusion_matrix,classification_report,recall_score,precision_score,accuracy_score
+from sklearn.metrics import make_scorer
 
 
 #---------------------------------------------------------------------------------------------------------------------
@@ -55,7 +56,7 @@ def DataStandard(df):
         
         #One-hot encode on Categories Data
         X = df[['Smoke','Gender','Diabetes','Ejection Fraction']]
-        X = pd.get_dummies(X)
+        X = pd.get_dummies(X,drop_first=True)
 
         #Join the One hot encode dataframe
         df = df.join(X)
@@ -104,6 +105,9 @@ def MLGridSearch (MLinstance,DefinedParam_grid,X_train,y_train):
     import warnings
     warnings.filterwarnings("ignore")
 
+    #Define scoring strategy
+    recallscore = make_scorer(recall_score)
+
     # - Instantiate  the ML Model
 
     ML =  MLinstance
@@ -112,7 +116,7 @@ def MLGridSearch (MLinstance,DefinedParam_grid,X_train,y_train):
 
     # - Instantiate the GridSearchCV Model
 
-    Grid = GridSearchCV(ML,DefinedParam_grid,cv=5,scoring='recall')
+    Grid = GridSearchCV(ML,DefinedParam_grid,cv=5,scoring=recallscore)
 
     # Fit the training data to the defined GridSearchCV Model
 
@@ -225,27 +229,27 @@ def NewDataTransform(data):
         if data['Smoke'].iloc[i] == "Yes": 
             clean['Smoke_Yes'] = clean['Smoke_Yes'] +1
         else: 
-            clean['Smoke_No'] = clean['Smoke_No']+1
+            clean['Smoke_Yes'] = 0
 
         if data['Gender'].iloc[i] == "Male": 
             clean['Gender_Male'] = clean['Gender_Male'] +1
         else: 
-            clean['Gender_Female'] = clean['Gender_Female']+1
+            clean['Gender_Male'] = 0
 
-        if data['Diabetes'].iloc[i] == "Diabetes": 
-            clean['Diabetes_Diabetes'] = clean['Diabetes_Diabetes'] +1
-        elif data['Diabetes'].iloc[i] == "Normal": 
+        if data['Diabetes'].iloc[i] == "Normal": 
             clean['Diabetes_Normal'] = clean['Diabetes_Normal']+1
-        else:
+        elif data['Diabetes'].iloc[i] == "Pre-diabetes": 
             clean['Diabetes_Pre-diabetes'] = clean['Diabetes_Pre-diabetes']+1
+        else:
+            clean['Diabetes_Pre-diabetes'] = 0
 
-        if data['Ejection Fraction'].iloc[i] == "High": 
-            clean['Ejection Fraction_High'] = clean['Ejection Fraction_High'] +1
+        if data['Ejection Fraction'].iloc[i] == "Normal": 
+            clean['Ejection Fraction_Normal'] = clean['Ejection Fraction_Normal']+1
 
         elif data['Ejection Fraction'].iloc[i] == "Low": 
             clean['Ejection Fraction_Low'] = clean['Ejection Fraction_Low']+1
         else:
-            clean['Ejection Fraction_Normal'] = clean['Ejection Fraction_Normal']+1
+            clean['Ejection Fraction_Low'] = 0
 
         df.append(clean)
            
@@ -266,7 +270,7 @@ def NewData(data):
     df = pd.DataFrame(columns=list(datapredict[0].columns))
     for i in range(len(datapredict)):
     
-        df = df.append(pd.DataFrame(datapredict[i].values[0].reshape(1,19),columns=list(datapredict[0].columns)))
+        df = df.append(pd.DataFrame(datapredict[i].values[0].reshape(1,15),columns=list(datapredict[0].columns)))
         #print(df)
     
     return df
