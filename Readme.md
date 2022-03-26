@@ -444,6 +444,7 @@ The results on the recall metrics were as followed :
 |  KNN_ML  | 0.997|  0.001|  
 | SVC_ML    |  0.888|  0.010| 
 | RT_ML    |  1.000000 | 0.000|  
+
   
 
 This still in line that the Random Forest Classifier are still the best model to predict the survivor rate on the given data features with almost perfect recall average and the negligence standard deviation with the cross validation measurement.
