@@ -439,7 +439,7 @@ Define the cross validation function with its selected output measurement
 The results on the recall metrics were as followed :
 
 |Model |Average |Standard Deviation| 
-|---|---|---|---|---|---|---|---|
+|---|---|---|
 |  LR_ML | 0.670    | 0.014| 
 |  KNN_ML  | 0.997|  0.001|  
 | SVC_ML    |  0.888|  0.010| 
